@@ -1,20 +1,24 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let cached: SupabaseClient | null = null;
 
-if (!url || !serviceKey) {
-  // Only warn at runtime, not during build
-  if (typeof window === "undefined" && process.env.NODE_ENV !== "production") {
-    console.warn(
+export function getSupabaseAdmin(): SupabaseClient {
+  if (cached) return cached;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error(
       "Supabase env vars missing. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."
     );
   }
-}
 
-export const supabaseAdmin = createClient(url ?? "", serviceKey ?? "", {
-  auth: { persistSession: false },
-});
+  cached = createClient(url, serviceKey, {
+    auth: { persistSession: false },
+  });
+  return cached;
+}
 
 export type MetaSetupRow = {
   id: string;
